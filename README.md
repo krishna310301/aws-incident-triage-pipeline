@@ -2,32 +2,69 @@
 
 An AWS infrastructure monitoring project that detects EC2 CPU threshold breaches, processes CloudWatch alarm context with AWS Lambda, generates an AI incident summary using Amazon Bedrock, and sends email notifications through Amazon SNS.
 
+## Quick Start
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/krishna310301/aws-infra-monitor.git
+cd aws-infra-monitor
+```
+
+2. Copy the example Terraform variables file:
+
+```bash
+cp terraform.tfvars.example terraform.tfvars
+```
+
+3. Update `terraform.tfvars` with your AWS region, notification email, instance type, CPU threshold, and Bedrock inference profile ID.
+
+4. Initialize Terraform:
+
+```bash
+terraform init
+```
+
+5. Review the infrastructure plan:
+
+```bash
+terraform plan
+```
+
+6. Deploy the infrastructure:
+
+```bash
+terraform apply
+```
+
+7. Confirm the SNS subscription email sent by AWS.
+
+8. Test the workflow using the sample CloudWatch alarm payload:
+
+```bash
+aws sns publish \
+  --topic-arn <alarm-trigger-topic-arn> \
+  --message file://test-alarm.json \
+  --region us-east-1
+```
+
+9. Verify Lambda execution in CloudWatch Logs:
+
+```bash
+aws logs tail /aws/lambda/aws-infra-monitor-incident-handler --region us-east-1 --since 10m
+```
+
 ## Architecture
 
-```text
-EC2 Instance
-     |
-     | CPUUtilization metric
-     v
-CloudWatch Alarm
-     |
-     | Alarm state change
-     v
-SNS Topic: alarm-trigger-topic
-     |
-     | Lambda subscription
-     v
-Lambda Function: incident_handler.py
-     |
-     | Parses alarm context
-     | Invokes Amazon Bedrock
-     | Generates incident summary
-     v
-SNS Topic: notification-topic
-     |
-     v
-Email notification
-
+```mermaid
+flowchart TD
+    A[EC2 Instance] -->|CPUUtilization metric| B[CloudWatch Alarm]
+    B -->|Alarm state change| C[SNS Topic: alarm-trigger-topic]
+    C -->|Lambda subscription| D[Lambda Function: incident_handler.py]
+    D -->|Invoke model| E[Amazon Bedrock Claude Haiku Inference Profile]
+    D -->|Write execution logs| F[CloudWatch Logs]
+    D -->|Publish formatted summary| G[SNS Topic: notification-topic]
+    G -->|Email delivery| H[Operator Email Notification]
 ```
 
 ## Tech Stack
@@ -50,6 +87,8 @@ Email notification
 - Integrated Amazon Bedrock using a Claude Haiku inference profile
 - Generated AI incident summaries, likely causes, recommended actions, and severity
 - Added fallback handling when AI generation fails
+- Scoped Bedrock IAM permissions to the configured inference profile and foundation model
+- Enforced IMDSv2 on the monitored EC2 instance
 - Added GitHub Actions workflow for Terraform validation
 
 ## Bedrock Model / Inference Profile
@@ -59,6 +98,12 @@ The Lambda function uses the following Bedrock inference profile through the `BE
 ```text
 us.anthropic.claude-haiku-4-5-20251001-v1:0
 ```
+
+## Demo Screenshot
+
+The system sends an AI-generated incident summary email after the test CloudWatch alarm payload is published to the alarm trigger SNS topic.
+
+![AI-generated incident notification email](assets/ai-incident-email.png)
 
 ## Validation Evidence
 
@@ -104,9 +149,11 @@ terraform validate
 ## Security Notes
 
 - Terraform state files and local variable files are excluded from version control.
-- The Lambda IAM role uses scoped permissions for CloudWatch Logs and SNS publishing.
-- - Bedrock invocation is scoped to the configured inference profile and foundation model. AWS Marketplace read/subscribe permissions are included because Anthropic Bedrock models may require Marketplace-backed access activation in some AWS accounts.
-- Screenshots and local validation evidence are not committed to avoid exposing account-specific details.
+- The Lambda IAM role uses scoped permissions for CloudWatch Logs, SNS publishing, and Bedrock model invocation.
+- Bedrock invocation is scoped to the configured inference profile and foundation model.
+- AWS Marketplace read/subscribe permissions are included because Anthropic Bedrock models may require Marketplace-backed access activation in some AWS accounts.
+- IMDSv2 is enforced on the EC2 instance using `http_tokens = "required"`.
+- Screenshots and local validation evidence are not committed unless sanitized for public display.
 
 ## Future Improvements
 
@@ -115,4 +162,4 @@ terraform validate
 - Add Slack or Microsoft Teams notification integration
 - Store incident history in DynamoDB
 - Add EventBridge routing for multi-alarm workflows
-- Tighten Bedrock IAM permission to a specific inference profile ARN
+- Further restrict Bedrock permissions using organization-specific service control policies
