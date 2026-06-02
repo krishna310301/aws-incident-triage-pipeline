@@ -24,6 +24,13 @@ data "aws_ami" "amazon_linux" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
+locals {
+  bedrock_inference_profile_arn = "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/${var.bedrock_model_id}"
+  bedrock_foundation_model_arn  = "arn:aws:bedrock:*::foundation-model/anthropic.claude-haiku-4-5-20251001-v1:0"
+}
+
 resource "aws_security_group" "ec2_sg" {
   name        = "${var.project_name}-ec2-sg"
   description = "Security group for monitored EC2 instance"
@@ -128,10 +135,22 @@ resource "aws_iam_policy" "lambda_policy" {
         Resource = aws_sns_topic.notification_topic.arn
       },
       {
-        Sid    = "AllowInvokeBedrockModel"
+        Sid    = "AllowInvokeBedrockInferenceProfile"
         Effect = "Allow"
         Action = [
           "bedrock:InvokeModel"
+        ]
+        Resource = [
+          local.bedrock_inference_profile_arn,
+          local.bedrock_foundation_model_arn
+        ]
+      },
+      {
+        Sid    = "AllowBedrockMarketplaceModelAccess"
+        Effect = "Allow"
+        Action = [
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe"
         ]
         Resource = "*"
       }
