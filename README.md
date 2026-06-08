@@ -1,8 +1,8 @@
 # AWS Incident Triage Pipeline
 
-AWS Incident Triage Pipeline is an event-driven cloud operations workflow that turns CloudWatch alarm events into structured incident summaries. It models a first-level incident response path: detect a metric breach, parse alarm context, generate a focused triage summary, and notify an operator.
+AWS Incident Triage Pipeline is an event-driven cloud operations workflow that turns CloudWatch alarm events into structured incident summaries. It follows the first response path I am used to from operations work: detect a metric breach, pull out the context, generate a focused triage summary, and notify an operator.
 
-This project connects my production operations background with cloud-native incident response. It is intentionally small, but it demonstrates the pieces I care about in real operations work: alarm context, least-privilege IAM, fallback handling, useful notifications, and repeatable infrastructure. Amazon Bedrock is used as an assistive triage layer, while deterministic fallback handling keeps the workflow usable if model output is unavailable or too generic.
+This project connects my production operations background with cloud-native incident response. It is intentionally small, but it includes the pieces I care about in real operations work: alarm context, least-privilege IAM, fallback handling, useful notifications, and repeatable infrastructure. Amazon Bedrock is used as an assistive triage layer, while deterministic fallback handling keeps the workflow usable if model output is unavailable or too generic.
 
 ## What It Does
 
