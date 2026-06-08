@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project name used for naming AWS resources"
   type        = string
-  default     = "aws-infra-monitor"
+  default     = "aws-incident-triage-pipeline"
 }
 
 variable "notification_email" {

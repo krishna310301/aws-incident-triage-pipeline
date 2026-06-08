@@ -1,15 +1,15 @@
-# AI-Powered Infrastructure Monitor
+# AWS Incident Triage Pipeline
 
-AI-Powered Infrastructure Monitor is an AWS incident triage workflow that turns CloudWatch alarm events into structured incident summaries. It models a first-level cloud operations workflow: detect a metric breach, parse alarm context, generate a focused incident summary, and notify an operator.
+AWS Incident Triage Pipeline is an event-driven cloud operations workflow that turns CloudWatch alarm events into structured incident summaries. It models a first-level incident response path: detect a metric breach, parse alarm context, generate a focused triage summary, and notify an operator.
 
-This project connects my production operations background with cloud-native incident response. It is intentionally small, but it demonstrates the pieces I care about in real operations work: alarm context, least-privilege IAM, fallback handling, useful notifications, and repeatable infrastructure.
+This project connects my production operations background with cloud-native incident response. It is intentionally small, but it demonstrates the pieces I care about in real operations work: alarm context, least-privilege IAM, fallback handling, useful notifications, and repeatable infrastructure. Amazon Bedrock is used as an assistive triage layer, while deterministic fallback handling keeps the workflow usable if model output is unavailable or too generic.
 
 ## What It Does
 
 - Monitors EC2 CPU utilization with Amazon CloudWatch alarms
 - Sends alarm state changes to an SNS trigger topic
 - Invokes a Python Lambda incident handler
-- Calls Amazon Bedrock to generate a remediation-focused incident summary
+- Calls Amazon Bedrock to generate a remediation-focused triage summary
 - Publishes the final incident notification through a separate SNS email topic
 - Stores Lambda execution logs in CloudWatch Logs
 - Provisions the full workflow with Terraform
@@ -35,7 +35,7 @@ flowchart TD
 | Compute | EC2, AWS Lambda |
 | Monitoring | CloudWatch alarm, CloudWatch Logs |
 | Messaging | Amazon SNS |
-| AI incident summary | Amazon Bedrock Claude Haiku |
+| Triage summary | Amazon Bedrock Claude Haiku |
 | Infrastructure | Terraform |
 | Validation | GitHub Actions, Python unit tests |
 
@@ -48,7 +48,7 @@ flowchart TD
 ├── tests/
 │   └── test_incident_handler.py
 ├── assets/
-│   └── ai-incident-email.png
+│   └── bedrock-incident-email.png
 ├── .github/workflows/
 │   └── terraform-validate.yml
 ├── main.tf
@@ -65,7 +65,7 @@ The Lambda function:
 
 - Extracts alarm name, metric, threshold, state, instance ID, region, timestamp, and current datapoint from the CloudWatch alarm payload
 - Prompts Bedrock to produce a concise summary, likely cause, immediate actions, and severity
-- Rejects short or generic AI responses and falls back to a deterministic incident template
+- Rejects short or generic model responses and falls back to a deterministic incident template
 - Sends a final incident email through SNS
 - Sends a fallback failure notification if alarm processing fails
 
@@ -95,15 +95,15 @@ This runs temporary CPU load on the EC2 instance after boot so the CloudWatch al
 
 ## Demo Screenshot
 
-The system sends an AI-generated incident email after the alarm event is processed.
+The system sends a Bedrock-assisted incident email after the alarm event is processed.
 
-![AI-generated incident notification email](assets/ai-incident-email.png)
+![Bedrock-assisted incident notification email](assets/bedrock-incident-email.png)
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/krishna310301/aws-infra-monitor.git
-cd aws-infra-monitor
+git clone https://github.com/krishna310301/aws-incident-triage-pipeline.git
+cd aws-incident-triage-pipeline
 cp terraform.tfvars.example terraform.tfvars
 ```
 
@@ -132,7 +132,7 @@ After deployment:
 4. Review Lambda logs:
 
 ```bash
-aws logs tail /aws/lambda/aws-infra-monitor-incident-handler \
+aws logs tail /aws/lambda/aws-incident-triage-pipeline-incident-handler \
   --region us-east-1 \
   --since 10m
 ```

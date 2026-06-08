@@ -195,7 +195,7 @@ def validate_bedrock_response(response_text):
 def get_fallback_summary(reason):
     return f"""SUMMARY: CloudWatch alarm triggered and requires manual review.
 
-LIKELY CAUSE: The alert was generated from CloudWatch alarm data, but AI-generated analysis was not used because: {reason}
+LIKELY CAUSE: The alert was generated from CloudWatch alarm data, but Bedrock-assisted analysis was not used because: {reason}
 
 IMMEDIATE ACTIONS:
 1. Open the CloudWatch alarm and review the metric graph.
@@ -221,7 +221,7 @@ Current Value: {alarm_data['current_value']}
 Region: {alarm_data['region']}
 Timestamp: {alarm_data['timestamp']}
 
-AI-GENERATED INCIDENT SUMMARY
+BEDROCK-ASSISTED INCIDENT SUMMARY
 
 {summary}
 
